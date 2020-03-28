@@ -45,8 +45,9 @@ class Repair(db.Model):
     name = db.Column(db.String(64), index=True, unique=False)
     price = db.Column(db.Integer,  index=True, unique=False)
     estimated_time = db.Column(db.Integer, index=True, unique=False)
-    is_available = db.Column(db.Boolean, index=True, unique=False)
-    device_id = db.Column(db.Integer, db.ForeignKey('device.id'))
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    is_available = db.Column(db.Boolean, index=True, unique=False, default=True)
+    device_id = db.Column(db.Integer, db.ForeignKey('device.id')) # links instance of Repair to instance of Device
 
     def __repr__(self):
         return '<Repair {} - {}>'.format(self.name, self.price)
@@ -54,8 +55,8 @@ class Repair(db.Model):
 
 class Device(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    model = db.Column(db.String(64), index=True, unique=True)
     brand = db.Column(db.String(64), index=True, unique=False)
+    model = db.Column(db.String(64), index=True, unique=True)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     repairs = db.relationship('Repair', backref='device', lazy='dynamic')
 
@@ -67,4 +68,4 @@ class Device(db.Model):
             setattr(self, 'timestamp', datetime.utcnow)
 
     def __repr__(self):
-        return '<device {} - {}>'.format(self.brand, self.username)
+        return '<device {} - {}>'.format(self.brand, self.model)

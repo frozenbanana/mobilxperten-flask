@@ -55,7 +55,8 @@ def get_device(id):
 
 @app.route('/device/<brand>/<model>', methods=['GET'])
 def get_device_by_model(brand, model):
-    device = Device.query.filter_by(model=model, brand=brand).first_or_404(description='There is no data with {}'.format(model))
+    device = Device.query.filter_by(model=model, brand=brand)\
+        .first_or_404(description='There is no data with {}'.format(model))
     return jsonify(device)
 
 @app.route('/device/<brand>', methods=['GET'])
@@ -76,12 +77,10 @@ def create_device():
     if Device.query.filter_by(username=data['model']).first():
         return bad_request('modelplease use a different username')
     device = Device()
-    device.from_dict(data, new_user=True)
+    device.from_dict(data, new_device=True)
     db.session.add(device)
     db.session.commit()
     response = jsonify(device.to_dict())
-    response.status_code = 201
-    response.headers['Location'] = url_for('api.get_user', id=user.id)
     return response
 
 
