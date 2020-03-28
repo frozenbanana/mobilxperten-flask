@@ -1,8 +1,9 @@
 from time import time
-from mobilXpertenApp import app, db, login
+from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 import jwt
+from mobilXpertenApp import app, db, login
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -43,7 +44,8 @@ class Repair(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), index=True, unique=False)
     price = db.Column(db.Integer,  index=True, unique=False)
-    estimated_time = db.Column(db.Integer,  index=True, unique=False)
+    estimated_time = db.Column(db.Integer, index=True, unique=False)
+    is_available = db.Column(db.Boolean, index=True, unique=False)
     device_id = db.Column(db.Integer, db.ForeignKey('device.id'))
 
     def __repr__(self):
@@ -54,7 +56,15 @@ class Device(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     model = db.Column(db.String(64), index=True, unique=True)
     brand = db.Column(db.String(64), index=True, unique=False)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     repairs = db.relationship('Repair', backref='device', lazy='dynamic')
+
+    def set_device(self, data, new_device=False):
+        for field in ['model', 'brand']:
+            if field in data:
+                setattr(self, field, data[field])
+        if new_device:
+            setattr(self, 'timestamp', datetime.utcnow)
 
     def __repr__(self):
         return '<device {} - {}>'.format(self.brand, self.username)
