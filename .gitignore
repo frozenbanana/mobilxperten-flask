@@ -1,4 +1,6 @@
 venv/
 flask/
 *.cfg
-*cpython*
+*.pyc
+__pycache__/
+
