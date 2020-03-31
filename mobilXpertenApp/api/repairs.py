@@ -1,5 +1,6 @@
 from mobilXpertenApp.api import bp
 from mobilXpertenApp.models import Device, Repair
+from flask import request, jsonify
 
 
 @bp.route('/repairs', methods=['GET'])

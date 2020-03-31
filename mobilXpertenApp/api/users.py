@@ -1,22 +1,21 @@
+from mobilXpertenApp import db
 from mobilXpertenApp.api import bp
+from mobilXpertenApp.api.errors import bad_request
+from mobilXpertenApp.models import User
 from flask import url_for, request, jsonify
 
-from mobilXpertenApp import db
-from mobilXpertenApp.models import User
-from mobilXpertenApp.api.errors import bad_request
 
-
-@bp.route('/user', methods=['GET'])
+@bp.route('/users', methods=['GET'])
 def get_users():
     users = User.query.limit(100).all()
-    result = [u.to_dict() for u in users]
-    return jsonify(result)
+    response = [u.to_dict() for u in users]
+    return jsonify(response)
 
-@bp.route('/user/<int:id>', methods=['GET'])
+@bp.route('/users/<int:id>', methods=['GET'])
 def get_user(id):
     user = User.query.get_or_404(id, description='There is no data with id {}'.format(id))
-    result = user.to_dict()
-    return jsonify(result)
+    response = user.to_dict()
+    return jsonify(response)
 
 
 @bp.route('/users', methods=['POST'])
