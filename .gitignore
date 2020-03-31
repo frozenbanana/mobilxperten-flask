@@ -2,8 +2,9 @@ venv/
 flask/
 *.cfg
 *.pyc
+**/*.pyc
 __pycache__/
-
+mobilXpertenApp/__pycache__/*
 mobilXpertenApp/__pycache__/__init__.cpython-37.pyc
 mobilXpertenApp/__pycache__/models.cpython-37.pyc
 mobilXpertenApp/__pycache__/routes.cpython-37.pyc

@@ -30,8 +30,15 @@ class User(UserMixin, db.Model):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
+        return check_password_hash(self.password_hash, password)        
 
+    def from_dict(self, data, new_user=False):
+        for field in ['username', 'email']:
+            if field in data:
+                setattr(self, field, data[field])
+        if new_user and 'password' in data:
+            self.set_password(data['password'])
+            
     def to_dict(self):
         return {
             'id': self.id,
@@ -58,7 +65,7 @@ class Repair(db.Model):
     is_available = db.Column(db.Boolean, index=True, unique=False, default=True)
     device_id = db.Column(db.Integer, db.ForeignKey('device.id')) # links instance of Repair to instance of Device
 
-    def set_repair(self, data, new_repair=False):
+    def from_dict(self, data, new_repair=False):
         for field in ['name', 'price', 'estimated_time']:
             if field in data:
                 setattr(self, field, data[field])
@@ -88,7 +95,7 @@ class Device(db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     repairs = db.relationship('Repair', backref='device', lazy='joined')
 
-    def set_device(self, data, new_device=False):
+    def from_dict(self, data, new_device=False):
         for field in ['model', 'brand']:
             if field in data:
                 setattr(self, field, data[field])
