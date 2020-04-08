@@ -14,6 +14,7 @@ def repopulate_db(app):
 
         print("Initalizing new data...")
         u = User(username="Jimmie", email="jimmie@sd.se")
+        u.set_password("123")
         db.session.add(u)
 
         for m in ['5', '5s', '6', '6+' , '6s', '7' , '7+', '8', '8+', 'X' , 'Xs', 'Xr', '11']:
@@ -31,11 +32,11 @@ def repopulate_db(app):
                 r = Repair(name=r+" Replacement", price=695, estimated_time=24, device=d)
                 db.session.add(r)
 
-        print("User", User.query.all())
-        for d in Device.query.all():
-            print(d)
-            for r in d.repairs:
-                print("    ", r)
+        #print("User", User.query.all())
+        #for d in Device.query.all():
+        #    print(d)
+        #    for r in d.repairs:
+        #        print("    ", r)
         
         print("Data Initalized.")
         # Save changes

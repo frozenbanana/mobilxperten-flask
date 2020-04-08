@@ -1,12 +1,13 @@
-#from flask import current_app, render_template, flash, redirect, url_for, request, jsonify
-#from flask_login import login_user, logout_user, current_user, login_required
+# from flask import current_app, render_template, flash, redirect, url_for, request, jsonify
+# from flask_login import login_user, logout_user, current_user, login_required
 # from werkzeug.urls import url_parse
 # from mobilXpertenApp import db
+# from mobilXpertenApp.api import bp
 # from mobilXpertenApp.models import User
 # from mobilXpertenApp.forms import LoginForm, RegistrationForm, ResetPasswordRequestForm, ResetPasswordForm
 # from mobilXpertenApp.email import send_password_reset_email
 
-# @current_app.route('/reset_password_request', methods=['GET', 'POST'])
+# @bp.route('/reset_password_request', methods=['GET', 'POST'])
 # def reset_password_request():
 #     if current_user.is_authenticated:
 #         return redirect(url_for('index'))
@@ -21,7 +22,7 @@
 #                            title='Reset Password', form=form)
 
 
-# @current_app.route('/reset_password/<token>', methods=['GET', 'POST'])
+# @bp.route('/reset_password/<token>', methods=['GET', 'POST'])
 # def reset_password(token):
 #     if current_user.is_authenticated:
 #         return redirect(url_for('index'))
@@ -48,6 +49,12 @@
 # def sallad():
 #     return "Hello, Sallad!"
 
+
+# @current_app.route('/jimmie')
+# def sallad():
+#     return "Hello, Jimmie!"
+
+
 # @current_app.route('/login', methods=['GET', 'POST'])
 # def login():
 #     if current_user.is_authenticated:
@@ -66,13 +73,13 @@
 #     return render_template('login.html', title='Sign In', form=form)
 
 
-# @current_app.route('/logout')
+# @bp.route('/logout')
 # def logout():
 #     logout_user()
 #     return redirect(url_for('index'))
 
 
-# @current_app.route('/register', methods=['GET', 'POST'])
+# @bp.route('/register', methods=['GET', 'POST'])
 # def register():
 #     if current_user.is_authenticated:
 #         return redirect(url_for('index'))
