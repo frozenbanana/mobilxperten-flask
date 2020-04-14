@@ -1,6 +1,6 @@
 from mobilXpertenApp import create_app, db
 from mobilXpertenApp.models import User, Device, Repair
-
+from random import randrange
 
 def repopulate_db(app):
     with app.app_context():
@@ -18,26 +18,33 @@ def repopulate_db(app):
         db.session.add(u)
 
         for m in ['5', '5s', '6', '6+' , '6s', '7' , '7+', '8', '8+', 'X' , 'Xs', 'Xr', '11']:
-            d = Device(brand="Apple", model="iPhone "+m)
+            d = Device(brand="Apple", model="iPhone "+m, type="smartphone")
             db.session.add(d)
             for r in ['Screen', 'Battery', 'Backside', 'Charge port']:
-                r = Repair(name=r+" Replacement", price=695, estimated_time=3, device=d)
+                r = Repair(name=r+" Replacement", price=randrange(695,1995, 100), estimated_time=3, device=d)
                 db.session.add(r)
 
-        # Samsung
-        for m in ['s6', 's7', 's7 edge', 's8' , 's9', 's10' , 's20']:
-            d = Device(brand="Samsung", model="Galaxy "+m)
-            db.session.add(d)
+        for m in ['Pro', 'Mini', 'Air', 'Air 2']:
+            d = Device(brand="Apple", model="iPad "+m, type="tablet")
             for r in ['Screen', 'Battery', 'Backside', 'Charge port']:
-                r = Repair(name=r+" Replacement", price=695, estimated_time=24, device=d)
+                r = Repair(name=r+" Replacement", price=randrange(695,1995, 100), estimated_time=72, device=d)
                 db.session.add(r)
-
-        #print("User", User.query.all())
-        #for d in Device.query.all():
-        #    print(d)
-        #    for r in d.repairs:
-        #        print("    ", r)
         
+        # Samsung
+        for m in ['S6', 'S7', 'S7 edge', 'S8' , 'S9', 'S10' , 'S20']:
+            d = Device(brand="Samsung", model="Galaxy "+m, type="smartphone")
+            db.session.add(d)
+            for r in ['Screen', 'Battery', 'Backside', 'Charge port']:
+                r = Repair(name=r+" Replacement", price=randrange(695,1995, 100), estimated_time=24, device=d)
+                db.session.add(r)
+        
+        for m in ['S4', 'S5e', 'S6']:
+            d = Device(brand="Samsung", model="Galaxy Tab "+m, type="tablet")
+            db.session.add(d)
+            for r in ['Screen', 'Battery', 'Backside', 'Charge port']:
+                r = Repair(name=r+" Replacement", price=randrange(695,1995, 100), estimated_time=72, device=d)
+                db.session.add(r)
+
         print("Data Initalized.")
         # Save changes
         db.session.commit()

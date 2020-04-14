@@ -1,11 +1,21 @@
-# from flask import current_app, render_template, flash, redirect, url_for, request, jsonify
+from flask import request, jsonify, current_app
 # from flask_login import login_user, logout_user, current_user, login_required
 # from werkzeug.urls import url_parse
 # from mobilXpertenApp import db
-# from mobilXpertenApp.api import bp
-# from mobilXpertenApp.models import User
-# from mobilXpertenApp.forms import LoginForm, RegistrationForm, ResetPasswordRequestForm, ResetPasswordForm
-# from mobilXpertenApp.email import send_password_reset_email
+from mobilXpertenApp.api import bp
+from mobilXpertenApp.models import Device
+
+
+@bp.route('/search')
+def search():
+    searchword = request.args.get('q', '')
+    devices, total = Device.search(searchword, 1,
+                            current_app.config['POSTS_PER_PAGE'])
+    if (total > 0):
+        response = [d.to_dict() for d in devices]
+    else:
+        response = {'result': 'No device found.'}
+    return jsonify(response)
 
 # @bp.route('/reset_password_request', methods=['GET', 'POST'])
 # def reset_password_request():

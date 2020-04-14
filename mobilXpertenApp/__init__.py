@@ -5,6 +5,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_mail import Mail
+from flask_cors import CORS
+from elasticsearch import Elasticsearch
 from config import Config
 
 login = LoginManager()
@@ -21,8 +23,9 @@ def create_app(config_class=Config):
     migrate.init_app(app, db)
     login.init_app(app)
     mail.init_app(app)
-   # app.elasticsearch = Elasticsearch([app.config['ELASTICSEARCH_URL']]) \
-       # if app.config['ELASTICSEARCH_URL'] else None
+    app.elasticsearch = Elasticsearch([app.config['ELASTICSEARCH_URL']]) \
+        if app.config['ELASTICSEARCH_URL'] else None
+    print('ELASTICSEARCH', app.elasticsearch)
    #app.redis = Redis.from_url(app.config['REDIS_URL'])
    # app.task_queue = rq.Queue('microblog-tasks', connection=app.redis)
 
@@ -56,7 +59,9 @@ def create_app(config_class=Config):
                                         backupCount=10)
         file_handler.setFormatter(logging.Formatter(
             '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
-
+    else:
+        print('Cors is enabled')
+        CORS(app)
 
     return app
 
