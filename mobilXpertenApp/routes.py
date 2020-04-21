@@ -3,13 +3,13 @@ from flask import request, jsonify, current_app
 # from werkzeug.urls import url_parse
 # from mobilXpertenApp import db
 from mobilXpertenApp.api import bp
-from mobilXpertenApp.models import Device
+from mobilXpertenApp.models import RepairDevice
 
 
 @bp.route('/search')
 def search():
     searchword = request.args.get('q', '')
-    devices, total = Device.search(searchword, 1,
+    devices, total = RepairDevice.search(searchword, 1,
                             current_app.config['POSTS_PER_PAGE'])
     if (total > 0):
         response = [d.to_dict() for d in devices]

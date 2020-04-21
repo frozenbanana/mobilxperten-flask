@@ -7,6 +7,7 @@ import jwt
 from mobilXpertenApp import db, login
 from mobilXpertenApp.search import add_to_index, remove_from_index, query_index
 
+
 class SearchableMixin(object):
     @classmethod
     def search(cls, expression, page, per_page):
@@ -45,8 +46,10 @@ class SearchableMixin(object):
         for obj in cls.query:
             add_to_index(cls.__tablename__, obj)
 
+
 db.event.listen(db.session, 'before_commit', SearchableMixin.before_commit)
 db.event.listen(db.session, 'after_commit', SearchableMixin.after_commit)
+
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -87,13 +90,13 @@ class User(UserMixin, db.Model):
         user = User.query.filter_by(token=token).first()
         if user is None or user.token_expiration < datetime.utcnow():
             return None
-        return 
+        return
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
-        return check_password_hash(self.password_hash, password)        
+        return check_password_hash(self.password_hash, password)
 
     def from_dict(self, data, new_user=False):
         for field in ['username', 'email']:
@@ -101,7 +104,7 @@ class User(UserMixin, db.Model):
                 setattr(self, field, data[field])
         if new_user and 'password' in data:
             self.set_password(data['password'])
-            
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -109,7 +112,7 @@ class User(UserMixin, db.Model):
             'email': self.email,
             'password_hash': self.password_hash,
         }
-    
+
     def __repr__(self):
         return '<User {}>'.format(self.username)
 
@@ -119,15 +122,20 @@ def load_user(id):
     return User.query.get(int(id))
 
 
-class Repair(db.Model):
+class Repair(SearchableMixin, db.Model):
     __searchable__ = ['name', 'price']
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), index=True, unique=False)
     price = db.Column(db.Integer,  index=True, unique=False)
     estimated_time = db.Column(db.Integer, index=True, unique=False)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    is_available = db.Column(db.Boolean, index=True, unique=False, default=True)
-    device_id = db.Column(db.Integer, db.ForeignKey('device.id')) # links instance of Repair to instance of Device
+    is_available = db.Column(db.Boolean, index=True,
+                             unique=False, default=True)
+    # links instance of Repair to instance of SaleInfo
+    sale_info_id = db.Column(
+        db.Integer, db.ForeignKey('sale_info.id'), default=None)
+    # links instance of Repair to instance of Device
+    device_id = db.Column(db.Integer, db.ForeignKey('device_base.id'), default=None)
 
     def from_dict(self, data, new_repair=False):
         for field in ['name', 'price', 'estimated_time']:
@@ -135,7 +143,6 @@ class Repair(db.Model):
                 setattr(self, field, data[field])
         if new_repair:
             setattr(self, 'timestamp', datetime.utcnow)
-
 
     def to_dict(self):
         return {
@@ -152,22 +159,37 @@ class Repair(db.Model):
         return '<Repair {} - {}>'.format(self.name, self.price)
 
 
-class Device(SearchableMixin, db.Model):
-    __searchable__ = ['brand', 'model', 'type']
+class DeviceBase(db.Model):
+    __tablename__ = 'device_base'
     id = db.Column(db.Integer, primary_key=True)
     brand = db.Column(db.String(64), index=True, unique=False)
-    model = db.Column(db.String(64), index=True, unique=True)
     img_url = db.Column(db.String(128), index=False, unique=False)
-    type = db.Column(db.String(128), index=True, unique=False)
+    typeOf = db.Column(db.String(128), index=True, unique=False)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    repairs = db.relationship('Repair', backref='device', lazy='joined')
+    __mapper_args__ = {
+        'polymorphic_identity': 'device_base',
+    }
 
     def from_dict(self, data, new_device=False):
-        for field in ['model', 'brand', 'type']:
-            if field in data:
-                setattr(self, field, data[field])
-        if new_device:
-            setattr(self, 'timestamp', datetime.utcnow)
+        raise NotImplementedError('You need to define a from_dict() method!')
+
+    def to_dict(self):
+        raise NotImplementedError('You need to define a to_dict() method!')
+
+    def __repr__(self):
+        raise NotImplementedError('You need to define a __repr__() method!')
+
+
+class RepairDevice(SearchableMixin, DeviceBase):
+    __tablename__ = 'repair_device'
+    __searchable__ = ['brand', 'model', 'typeOf']
+    id = db.Column(db.Integer, db.ForeignKey('device_base.id'), primary_key=True)
+    model = db.Column(db.String(64), index=True, unique=True)
+    repairs = db.relationship('Repair', backref='device', lazy='joined')
+
+    __mapper_args__ = {
+        'polymorphic_identity':'repair_device',
+    }
 
     def to_dict(self):
         return {
@@ -176,9 +198,98 @@ class Device(SearchableMixin, db.Model):
             'model': self.model,
             'timestamp': self.timestamp,
             'img_url': self.img_url,
-            'type': self.type,
+            'type': self.typeOf,
             'repairs': [r.to_dict() for r in self.repairs]
         }
 
+    def from_dict(self):
+        for field in ['model', 'brand', 'typeOf']:
+            if field in data:
+                setattr(self, field, data[field])
+        if new_device:
+            setattr(self, 'timestamp', datetime.utcnow)
+
     def __repr__(self):
-        return '<device {} - {} - {}>'.format(self.brand, self.model, self.type)
+        return '<RepairDevice {} - {} - {}>'.format(self.brand, self.model, self.typeOf)
+
+
+class SaleDevice(SearchableMixin, DeviceBase):
+    __tablename__ = 'sale_device'
+    __searchable__ = ['brand', 'model', 'typeOf']
+    id = db.Column(db.Integer, db.ForeignKey('device_base.id'), primary_key=True)
+    model = db.Column(db.String(64), index=True, unique=False)
+    
+    sale_info = db.relationship("SaleInfo", uselist=False, back_populates="device")
+
+    __mapper_args__ = {
+        'polymorphic_identity':'sale_device',
+    }
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'brand': self.brand,
+            'model': self.model,
+            'timestamp': self.timestamp,
+            'img_url': self.img_url,
+            'type': self.typeOf,
+            'sale_info': self.sale_info.to_dict()
+        }
+
+    def from_dict(self):
+        for field in ['model', 'brand', 'typeOf']:
+            if field in data:
+                setattr(self, field, data[field])
+        if new_device:
+            setattr(self, 'timestamp', datetime.utcnow)
+
+    def __repr__(self):
+        return '<SaleDevice {} - {} - {}>'.format(self.brand, self.model, self.typeOf)
+
+
+class SaleInfo(db.Model):
+    __tablename__ = 'sale_info'
+    __searchable__ = ['grade', 'price_out', 'color', 'is_operator_locked', 'imei_number', 'memory_capacity']
+    id = db.Column(db.Integer, primary_key=True)
+    memory_capacity = db.Column(db.Integer,  index=True, unique=False)
+    imei_number = db.Column(db.Integer,  index=True, unique=False)
+    grade = db.Column(db.Integer, index=True, unique=False)  # 0: Perfect, 1: Minor imperfections, 2: OK, 3: Rough, 4: Barely Sellable
+    color = db.Column(db.String(64), index=True, unique=False)
+    price_in = db.Column(db.Integer,  index=True, unique=False)
+    price_out = db.Column(db.Integer,  index=True, unique=False)
+    is_operator_locked = db.Column(db.Boolean,  index=True, unique=False, default=False)
+    operator_name = db.Column(db.String(64), index=False, unique=False, default=None)
+    date_of_repair = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+
+    # creates a collection of Repairs objects
+    # and creates a .sale_info on each Repair object which refers to the parent SaleInfo object
+    repairs_done = db.relationship("Repair", backref="sale_info")
+    
+    
+    device_id = db.Column(db.Integer, db.ForeignKey('device_base.id'))
+    device = db.relationship("SaleDevice", uselist=False, back_populates="sale_info")
+
+    def from_dict(self, data, new_saleInfo=False):
+        for field in ['memory_capacity', 'imei_number', 'grade', 'color', 'price_out', 'is_operator_locked', 'operator_name', 'repairs_done']:
+            if field in data:
+                setattr(self, field, data[field])
+        if new_saleInfo:
+            setattr(self, 'date_of_repair', datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'memory_capacity': self.memory_capacity,
+            'imei_number': self.imei_number,
+            'grade': self.grade,
+            'color': self.color,
+            'price_in': self.price_in,
+            'price_out': self.price_out,
+            'is_operator_locked': self.is_operator_locked,
+            'operator_name': self.operator_name,
+            'repairs_done': [r.to_dict() for r in self.repairs_done],
+            'date_of_repair': self.date_of_repair,
+            'device_id': self.device_id,
+        }
+
+    def __repr__(self):
+        return '<SaleInfo {} - {} - {} - {} - {} SEK - {} SEK>'.format(self.imei_number, self.grade, self.color, self.price_in, self.price_out)

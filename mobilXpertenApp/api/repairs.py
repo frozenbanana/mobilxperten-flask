@@ -1,5 +1,5 @@
 from mobilXpertenApp.api import bp
-from mobilXpertenApp.models import Device, Repair
+from mobilXpertenApp.models import RepairDevice, Repair
 from flask import request, jsonify
 
 
@@ -34,7 +34,7 @@ def create_repair():
 
 @bp.route('/repairs', methods=['PUT'])
 def update_repair(id):
-    repair = Device.query.get_or_404(id)
+    repair = RepairDevice.query.get_or_404(id)
     data = request.get_json() or {}
     repair.from_dict(data, new_device=False)
     db.session.commit()
